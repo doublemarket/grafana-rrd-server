@@ -5,18 +5,15 @@ import (
 	"fmt"
 	"math"
 	"net/http"
-	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
+	"github.com/BurntSushi/toml"
 	"github.com/ziutek/rrd"
 )
 
-const (
-	step      = 10
-	heartbeat = 2 * step
-)
+var config Config
 
 type QueryResponse struct {
 	Target     string      `json:"target"`
@@ -47,6 +44,16 @@ type QueryRequest struct {
 	MaxDataPoints int    `json:"maxDataPoints"`
 }
 
+type Config struct {
+	Server ServerConfig
+}
+
+type ServerConfig struct {
+	RrdPath string
+	Step    int
+	Port    int
+}
+
 type Temp struct {
 	Message string `json:"message"`
 }
@@ -63,7 +70,7 @@ func hello(w http.ResponseWriter, r *http.Request) {
 
 func search(w http.ResponseWriter, r *http.Request) {
 	var result []string
-	directories, _ := filepath.Glob(os.Args[1] + "*")
+	directories, _ := filepath.Glob(config.Server.RrdPath + "*")
 	for _, d := range directories {
 		dName := filepath.Base(d)
 		files, _ := filepath.Glob(d + "/*.rrd")
@@ -105,7 +112,7 @@ func query(w http.ResponseWriter, r *http.Request) {
 	for _, target := range queryRequest.Targets {
 		var points [][]float64
 		splitTarget := strings.Split(target.Target, ":")
-		fPath := os.Args[1] + splitTarget[0] + "/" + splitTarget[1] + ".rrd"
+		fPath := config.Server.RrdPath + splitTarget[0] + "/" + splitTarget[1] + ".rrd"
 		infoRes, err := rrd.Info(fPath)
 		if err != nil {
 			fmt.Println("error in query 2")
@@ -117,7 +124,7 @@ func query(w http.ResponseWriter, r *http.Request) {
 			to = lastUpdate
 		}
 		fmt.Println(from, " ", to, " ", lastUpdate)
-		fetchRes, err := rrd.Fetch(fPath, "AVERAGE", from, to, step*time.Second)
+		fetchRes, err := rrd.Fetch(fPath, "AVERAGE", from, to, time.Duration(config.Server.Step)*time.Second)
 		if err != nil {
 			fmt.Println("error in query 3")
 			fmt.Println(err)
@@ -158,6 +165,10 @@ func annotations(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	_, err := toml.DecodeFile("config.toml", &config)
+	if err != nil {
+		panic(err)
+	}
 	http.HandleFunc("/search", search)
 	http.HandleFunc("/query", query)
 	http.HandleFunc("/annotations", annotations)
