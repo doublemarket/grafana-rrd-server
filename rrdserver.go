@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"net/http"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -70,14 +71,20 @@ func hello(w http.ResponseWriter, r *http.Request) {
 
 func search(w http.ResponseWriter, r *http.Request) {
 	var result []string
-	directories, _ := filepath.Glob(config.Server.RrdPath + "*")
-	for _, d := range directories {
-		dName := filepath.Base(d)
-		files, _ := filepath.Glob(d + "/*.rrd")
-		for _, f := range files {
-			fName := strings.Replace(filepath.Base(f), ".rrd", "", 1)
-			result = append(result, dName+":"+fName)
-		}
+	err := filepath.Walk(config.Server.RrdPath,
+		func(path string, info os.FileInfo, err error) error {
+			if info.IsDir() || !strings.Contains(info.Name(), ".rrd") {
+				return nil
+			}
+			rel, _ := filepath.Rel(config.Server.RrdPath, path)
+			fName := strings.Replace(rel, ".rrd", "", 1)
+			fName = strings.Replace(fName, "/", ":", -1)
+			result = append(result, fName)
+
+			return nil
+		})
+	if err != nil {
+		fmt.Println(err)
 	}
 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -111,8 +118,7 @@ func query(w http.ResponseWriter, r *http.Request) {
 	var result []QueryResponse
 	for _, target := range queryRequest.Targets {
 		var points [][]float64
-		splitTarget := strings.Split(target.Target, ":")
-		fPath := config.Server.RrdPath + splitTarget[0] + "/" + splitTarget[1] + ".rrd"
+		fPath := config.Server.RrdPath + strings.Replace(target.Target, ":", "/", -1) + ".rrd"
 		infoRes, err := rrd.Info(fPath)
 		if err != nil {
 			fmt.Println("error in query 2")
