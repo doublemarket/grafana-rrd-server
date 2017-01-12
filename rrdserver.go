@@ -55,12 +55,12 @@ type ServerConfig struct {
 	Port    int
 }
 
-type Temp struct {
+type ErrorResponse struct {
 	Message string `json:"message"`
 }
 
 func hello(w http.ResponseWriter, r *http.Request) {
-	result := Temp{Message: "hello"}
+	result := ErrorResponse{Message: "hello"}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Headers", "accept, content-type")
@@ -127,13 +127,16 @@ func query(w http.ResponseWriter, r *http.Request) {
 		ds := target.Target[strings.LastIndex(target.Target, ":")+1 : len(target.Target)]
 		fPath := strings.Replace(target.Target, ":"+ds, "", 1)
 		fPath = config.Server.RrdPath + strings.Replace(fPath, ":", "/", -1) + ".rrd"
+		if _, err := os.Stat(fPath); err != nil {
+			fmt.Println("File", fPath, "does not exist")
+			continue
+		}
 		infoRes, err := rrd.Info(fPath)
 		if err != nil {
 			fmt.Println("error in query 2")
 			fmt.Println(err)
 		}
 		lastUpdate := time.Unix(int64(infoRes["last_update"].(uint)), 0)
-		fmt.Println(from, " ", to, " ", lastUpdate)
 		if to.After(lastUpdate) && lastUpdate.After(from) {
 			to = lastUpdate
 		}
@@ -158,7 +161,7 @@ func query(w http.ResponseWriter, r *http.Request) {
 	}
 	json, err := json.Marshal(result)
 	if err != nil {
-		fmt.Println("error when json.Marshal")
+		fmt.Println("error json.Marshal")
 		fmt.Println(err)
 	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -170,7 +173,7 @@ func query(w http.ResponseWriter, r *http.Request) {
 
 // no need to support
 func annotations(w http.ResponseWriter, r *http.Request) {
-	result := Temp{Message: "annotations"}
+	result := ErrorResponse{Message: "annotations"}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Headers", "accept, content-type")
