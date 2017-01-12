@@ -79,7 +79,13 @@ func search(w http.ResponseWriter, r *http.Request) {
 			rel, _ := filepath.Rel(config.Server.RrdPath, path)
 			fName := strings.Replace(rel, ".rrd", "", 1)
 			fName = strings.Replace(fName, "/", ":", -1)
-			result = append(result, fName)
+			infoRes, err := rrd.Info(path)
+			if err != nil {
+				fmt.Println(err)
+			}
+			for ds, _ := range infoRes["ds.index"].(map[string]interface{}) {
+				result = append(result, fName+":"+ds)
+			}
 
 			return nil
 		})
@@ -118,7 +124,9 @@ func query(w http.ResponseWriter, r *http.Request) {
 	var result []QueryResponse
 	for _, target := range queryRequest.Targets {
 		var points [][]float64
-		fPath := config.Server.RrdPath + strings.Replace(target.Target, ":", "/", -1) + ".rrd"
+		ds := target.Target[strings.LastIndex(target.Target, ":")+1 : len(target.Target)]
+		fPath := strings.Replace(target.Target, ":"+ds, "", 1)
+		fPath = config.Server.RrdPath + strings.Replace(fPath, ":", "/", -1) + ".rrd"
 		infoRes, err := rrd.Info(fPath)
 		if err != nil {
 			fmt.Println("error in query 2")
@@ -129,14 +137,15 @@ func query(w http.ResponseWriter, r *http.Request) {
 		if to.After(lastUpdate) && lastUpdate.After(from) {
 			to = lastUpdate
 		}
-		fmt.Println(from, " ", to, " ", lastUpdate)
 		fetchRes, err := rrd.Fetch(fPath, "AVERAGE", from, to, time.Duration(config.Server.Step)*time.Second)
 		if err != nil {
 			fmt.Println("error in query 3")
 			fmt.Println(err)
 		}
 		timestamp := fetchRes.Start
-		for _, value := range fetchRes.Values() {
+		dsIndex := infoRes["ds.index"].(map[string]interface{})[ds].(uint)
+		for i := 0; i < fetchRes.RowCnt; i++ {
+			value := fetchRes.ValueAt(i, int(dsIndex))
 			if math.IsNaN(value) {
 				value = 0
 			}
