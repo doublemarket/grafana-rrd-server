@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -39,7 +40,9 @@ type QueryRequest struct {
 	IntervalMs int    `json:"intervalMs"`
 	Targets    []struct {
 		Target string `json:"target"`
-		RefId  string `json:"refId"`
+		RefID  string `json:"refId"`
+		Hide   bool   `json:"hide"`
+		Type   string `json:"type"`
 	} `json:"targets"`
 	Format        string `json:"format"`
 	MaxDataPoints int    `json:"maxDataPoints"`
@@ -171,7 +174,6 @@ func query(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(json))
 }
 
-// no need to support
 func annotations(w http.ResponseWriter, r *http.Request) {
 	result := ErrorResponse{Message: "annotations"}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -182,15 +184,21 @@ func annotations(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(json))
 }
 
+func ReadConfigFile(filename string) error {
+	_, err := toml.DecodeFile(filename, &config)
+	return err
+}
+
 func main() {
-	_, err := toml.DecodeFile("config.toml", &config)
+	err := ReadConfigFile("config.toml")
 	if err != nil {
 		panic(err)
 	}
+
 	http.HandleFunc("/search", search)
 	http.HandleFunc("/query", query)
 	http.HandleFunc("/annotations", annotations)
 	http.HandleFunc("/", hello)
 
-	http.ListenAndServe(":8810", nil)
+	http.ListenAndServe(":"+strconv.Itoa(config.Server.Port), nil)
 }
