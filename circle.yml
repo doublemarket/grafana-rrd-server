@@ -5,5 +5,3 @@ machine:
 dependencies:
   pre:
     - sudo apt-get update; sudo apt install -y librrd-dev
-
-test:
