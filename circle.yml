@@ -4,6 +4,6 @@ machine:
 
 dependencies:
   pre:
-    - apt install -y librrd-dev
+    - sudo apt-get update; sudo apt install -y librrd-dev
 
 test:
