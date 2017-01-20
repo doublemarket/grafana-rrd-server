@@ -4,4 +4,7 @@ machine:
 
 dependencies:
   pre:
-    - sudo apt-get update; sudo apt install -y librrd-dev
+    - sudo apt-get update
+    - sudo apt install -y librrd-dev
+    - sudo apt install -y glide
+    - glide i
