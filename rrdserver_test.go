@@ -2,11 +2,9 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"strings"
 	"testing"
 )
@@ -41,7 +39,6 @@ func TestHello(t *testing.T) {
 
 	if r.StatusCode != 200 {
 		t.Fatalf("Status code is not 200 but %d.", r.StatusCode)
-		return
 	}
 
 	if "{\"message\":\"hello\"}" != string(data) {
@@ -74,8 +71,6 @@ func TestSearch(t *testing.T) {
 
 	if len(searchResponse) <= 0 {
 		t.Fatalf("Data Error. %v", searchResponse)
-	} else {
-		t.Log(searchResponse)
 	}
 }
 
@@ -87,13 +82,15 @@ func TestQuery(t *testing.T) {
 	// Test for an OPTIONS request
 	reqOptions, err := http.NewRequest("OPTIONS", ts.URL, nil)
 	if err != nil {
-		t.Fatalf("Error at an OPTIONS request. %v", err)
+		t.Fatalf("Error creating an OPTIONS request. %v", err)
 	}
 	r, err := client.Do(reqOptions)
+	if err != nil {
+		t.Fatalf("Error at an OPTIONS request. %v", err)
+	}
 
 	if r.StatusCode != 200 {
 		t.Fatalf("Status code is not 200 but %d.", r.StatusCode)
-		return
 	}
 
 	if r.Header.Get("Access-Control-Allow-Origin") != "*" {
@@ -139,7 +136,6 @@ func TestQuery(t *testing.T) {
 
 	if r.StatusCode != 200 {
 		t.Fatalf("Status code is not 200 but %d.", r.StatusCode)
-		return
 	}
 
 	if r.Header.Get("Access-Control-Allow-Origin") != "*" {
@@ -156,12 +152,12 @@ func TestQuery(t *testing.T) {
 	var qrs = []QueryResponse{}
 	err = decoder.Decode(&qrs)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error in query 1: %v", err)
+		t.Fatalf("Error at decoding JSON response. %v", err)
 	}
 
 	for _, v := range qrs {
 		if len(v.Target) < 0 {
-			t.Errorf("Response is empty.")
+			t.Fatalf("Response is empty.")
 		}
 	}
 }
