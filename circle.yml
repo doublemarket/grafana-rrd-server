@@ -5,6 +5,7 @@ machine:
 dependencies:
   pre:
     - sudo apt-get update
+    - sudo add-apt-repository -y ppa:masterminds/glide
     - sudo apt install -y librrd-dev
     - sudo apt install -y glide
     - glide i
