@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"strings"
 	"testing"
 )
@@ -152,15 +153,16 @@ func TestQuery(t *testing.T) {
 	}
 
 	decoder := json.NewDecoder(r.Body)
-	var queryRequest QueryRequest
-	err = decoder.Decode(&queryRequest)
+	var qrs = []QueryResponse{}
+	err = decoder.Decode(&qrs)
 	if err != nil {
-		fmt.Println("error in query 1")
-		fmt.Println(err)
+		fmt.Fprintf(os.Stderr, "error in query 1: %v", err)
 	}
 
-	if len(queryRequest.Targets) < 1 {
-		t.Fatalf("Response is empty.")
+	for _, v := range qrs {
+		if len(v.Target) < 0 {
+			t.Errorf("Response is empty.")
+		}
 	}
 }
 
