@@ -1,0 +1,5 @@
+package: .
+import:
+- package: github.com/BurntSushi/toml
+  version: ~0.2.0
+- package: github.com/ziutek/rrd
