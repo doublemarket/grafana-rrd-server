@@ -1,0 +1,9 @@
+machine:
+  environment:
+    IMPORT_PATH: "github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME"
+
+dependencies:
+  pre:
+    - apt install -y librrd-dev
+
+test:
