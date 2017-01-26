@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -128,7 +129,8 @@ func query(w http.ResponseWriter, r *http.Request) {
 	for _, target := range queryRequest.Targets {
 		var points [][]float64
 		ds := target.Target[strings.LastIndex(target.Target, ":")+1 : len(target.Target)]
-		fPath := strings.Replace(target.Target, ":"+ds, "", 1)
+		rrdDsRep := regexp.MustCompile(`:` + ds + `$`)
+		fPath := rrdDsRep.ReplaceAllString(target.Target, "")
 		fPath = config.Server.RrdPath + strings.Replace(fPath, ":", "/", -1) + ".rrd"
 		if _, err := os.Stat(fPath); err != nil {
 			fmt.Println("File", fPath, "does not exist")
