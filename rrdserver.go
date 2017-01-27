@@ -153,7 +153,9 @@ func query(w http.ResponseWriter, r *http.Request) {
 		}
 		timestamp := fetchRes.Start
 		dsIndex := infoRes["ds.index"].(map[string]interface{})[ds].(uint)
-		for i := 0; i < fetchRes.RowCnt; i++ {
+		// The last point is likely to contain wrong data (mostly a big number)
+		// RowCnt-1 is for ignoring the last point (temporary solution)
+		for i := 0; i < fetchRes.RowCnt-1; i++ {
 			value := fetchRes.ValueAt(i, int(dsIndex))
 			if math.IsNaN(value) {
 				value = 0
