@@ -85,6 +85,7 @@ func search(w http.ResponseWriter, r *http.Request) {
 			fName = strings.Replace(fName, "/", ":", -1)
 			infoRes, err := rrd.Info(path)
 			if err != nil {
+				fmt.Println("ERROR: Cannot retrieve information from ", path)
 				fmt.Println(err)
 			}
 			for ds, _ := range infoRes["ds.index"].(map[string]interface{}) {
@@ -117,7 +118,7 @@ func query(w http.ResponseWriter, r *http.Request) {
 	var queryRequest QueryRequest
 	err := decoder.Decode(&queryRequest)
 	if err != nil {
-		fmt.Println("error in query 1")
+		fmt.Println("ERROR: Cannot decode the request")
 		fmt.Println(err)
 	}
 	defer r.Body.Close()
@@ -138,7 +139,7 @@ func query(w http.ResponseWriter, r *http.Request) {
 		}
 		infoRes, err := rrd.Info(fPath)
 		if err != nil {
-			fmt.Println("error in query 2")
+			fmt.Println("ERROR: Cannot retrieve information from ", fPath)
 			fmt.Println(err)
 		}
 		lastUpdate := time.Unix(int64(infoRes["last_update"].(uint)), 0)
@@ -147,7 +148,7 @@ func query(w http.ResponseWriter, r *http.Request) {
 		}
 		fetchRes, err := rrd.Fetch(fPath, "AVERAGE", from, to, time.Duration(config.Server.Step)*time.Second)
 		if err != nil {
-			fmt.Println("error in query 3")
+			fmt.Println("ERROR: Cannot retrieve time series data from ", fPath)
 			fmt.Println(err)
 		}
 		timestamp := fetchRes.Start
@@ -166,7 +167,7 @@ func query(w http.ResponseWriter, r *http.Request) {
 	}
 	json, err := json.Marshal(result)
 	if err != nil {
-		fmt.Println("error json.Marshal")
+		fmt.Println("ERROR: Cannot convert response data into JSON")
 		fmt.Println(err)
 	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -192,8 +193,10 @@ func ReadConfigFile(filename string) error {
 }
 
 func main() {
-	err := ReadConfigFile("config.toml")
+	configFilePath := "config.toml"
+	err := ReadConfigFile(configFilePath)
 	if err != nil {
+		fmt.Println("ERROR: Cannot read config file ", configFilePath)
 		panic(err)
 	}
 
