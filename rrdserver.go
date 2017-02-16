@@ -157,10 +157,9 @@ func query(w http.ResponseWriter, r *http.Request) {
 		// RowCnt-1 is for ignoring the last point (temporary solution)
 		for i := 0; i < fetchRes.RowCnt-1; i++ {
 			value := fetchRes.ValueAt(dsIndex, i)
-			if math.IsNaN(value) {
-				value = 0
+			if !math.IsNaN(value) {
+				points = append(points, []float64{value, float64(timestamp.Unix()) * 1000})
 			}
-			points = append(points, []float64{value, float64(timestamp.Unix()) * 1000})
 			timestamp = timestamp.Add(fetchRes.Step)
 		}
 		defer fetchRes.FreeValues()
