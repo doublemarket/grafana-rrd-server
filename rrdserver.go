@@ -152,11 +152,11 @@ func query(w http.ResponseWriter, r *http.Request) {
 			fmt.Println(err)
 		}
 		timestamp := fetchRes.Start
-		dsIndex := infoRes["ds.index"].(map[string]interface{})[ds].(uint)
+		dsIndex := int(infoRes["ds.index"].(map[string]interface{})[ds].(uint))
 		// The last point is likely to contain wrong data (mostly a big number)
 		// RowCnt-1 is for ignoring the last point (temporary solution)
 		for i := 0; i < fetchRes.RowCnt-1; i++ {
-			value := fetchRes.ValueAt(i, int(dsIndex))
+			value := fetchRes.ValueAt(dsIndex, i)
 			if math.IsNaN(value) {
 				value = 0
 			}
