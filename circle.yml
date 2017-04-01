@@ -17,7 +17,9 @@ dependencies:
 
 deployment:
   release:
+    tag: /v[0-9]+(\.[0-9]+)+/
     commands:
+      - echo "hoge"
       — go get github.com/mitchellh/gox
       — go get github.com/tcnksm/ghr
       — gox -osarch "linux/amd64 darwin/amd64 windows/amd64" -ldflags "-X main.Version=$BUILD_VERSION -X main.BuildDate=$BUILD_DATE" -output "dist/{{.Dir}}_{{.OS}}_{{.Arch}}"
