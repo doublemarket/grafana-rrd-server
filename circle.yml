@@ -3,7 +3,6 @@ machine:
     GOROOT: ""
     GOPATH: "${HOME}/.go_project"
     PATH: "${GOPATH}/bin:${PATH}"
-    BUILD_PATH: "${GOPATH}/src/github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}"
     IMPORT_PATH: "github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME"
 
 dependencies:
@@ -12,7 +11,7 @@ dependencies:
     - sudo apt-get update
     - sudo apt install -y librrd-dev
     - sudo apt install -y glide
-    - mkdir -p ~/.go_project/src/github.com/${CIRCLE_PROJECT_USERNAME}
+    - mkdir -p ${GOPATH}/src/github.com/${CIRCLE_PROJECT_USERNAME}
     - ln -s ${HOME}/${CIRCLE_PROJECT_REPONAME} ${BUILD_PATH}
     - glide i
 
