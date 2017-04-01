@@ -3,7 +3,6 @@ machine:
     GOROOT: ""
     GOPATH: "${HOME}/.go_project"
     PATH: "${GOPATH}/bin:${PATH}"
-    BUILD_PATH: "${GOPATH}/src/github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}"
     IMPORT_PATH: "github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME"
 
 dependencies:
@@ -12,15 +11,15 @@ dependencies:
     - sudo apt-get update
     - sudo apt install -y librrd-dev
     - sudo apt install -y glide
-    - mkdir -p ~/.go_project/src/github.com/${CIRCLE_PROJECT_USERNAME}
+    - mkdir -p ${GOPATH}/src/github.com/${CIRCLE_PROJECT_USERNAME}
     - ln -s ${HOME}/${CIRCLE_PROJECT_REPONAME} ${BUILD_PATH}
     - glide i
 
 deployment:
   release:
-    tag: /v[0-9]+\.[0-9]+\.[0-9]+/
+    tag: /v[0-9]+(\.[0-9]+)+/
     commands:
-      — go get github.com/mitchellh/gox
-      — go get github.com/tcnksm/ghr
-      — gox -osarch "linux/amd64 darwin/amd64 windows/amd64" -ldflags "-X main.Version=$BUILD_VERSION -X main.BuildDate=$BUILD_DATE" -output "dist/{{.Dir}}_{{.OS}}_{{.Arch}}"
-      — ghr -t $GITHUB_TOKEN -u $CIRCLE_PROJECT_USERNAME -r $CIRCLE_PROJECT_REPONAME --replace $(git describe --tags) dist/
+      - go get github.com/mitchellh/gox
+      - go get github.com/tcnksm/ghr
+      - gox -osarch "linux/amd64 darwin/amd64 windows/amd64" -ldflags "-X main.Version=$BUILD_VERSION -X main.BuildDate=$BUILD_DATE" -output "dist/{{.Dir}}_{{.OS}}_{{.Arch}}"
+      - ghr -t $GITHUB_TOKEN -u $CIRCLE_PROJECT_USERNAME -r $CIRCLE_PROJECT_REPONAME --replace $(git describe --tags) dist/
