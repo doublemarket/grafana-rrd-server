@@ -18,7 +18,7 @@ dependencies:
 
 deployment:
   release:
-    tag: /v[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}/
+    tag: /v[0-9]+\.[0-9]+\.[0-9]+/
     commands:
       — go get github.com/mitchellh/gox
       — go get github.com/tcnksm/ghr
