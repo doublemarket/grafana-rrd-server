@@ -13,6 +13,9 @@ dependencies:
     - sudo apt install -y librrd-dev
     - sudo apt install -y glide
     - glide i
+  override:
+    - mkdir -p ~/.go_project/src/github.com/${CIRCLE_PROJECT_USERNAME}
+    - ln -s ${HOME}/${CIRCLE_PROJECT_REPONAME} ${BUILD_PATH}
 
 deployment:
   release:
