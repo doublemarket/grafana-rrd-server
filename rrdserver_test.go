@@ -9,20 +9,6 @@ import (
 	"testing"
 )
 
-func TestReadConfigFile(t *testing.T) {
-	filename := "config.toml"
-	ReadConfigFile(filename)
-
-	if config.Server.RrdPath != "sample/" {
-		t.Fatalf("Error reading config file %s", filename)
-	}
-
-	err := ReadConfigFile("fugahoge.toml")
-	if err == nil {
-		t.Fatalf("The file %s is invalid but error didn't happen.", err)
-	}
-}
-
 func TestHello(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(hello))
 	defer ts.Close()
@@ -47,10 +33,10 @@ func TestHello(t *testing.T) {
 }
 
 func TestSearch(t *testing.T) {
+	SetArgs()
+
 	requestJSON := `{"target":"hoge"}`
 	reader := strings.NewReader(requestJSON)
-
-	ReadConfigFile("config.toml")
 
 	ts := httptest.NewServer(http.HandlerFunc(search))
 	defer ts.Close()
@@ -184,4 +170,8 @@ func TestAnnotations(t *testing.T) {
 	if "{\"message\":\"annotations\"}" != string(data) {
 		t.Fatalf("Data Error. %v", string(data))
 	}
+}
+
+func TestSetArgs(t *testing.T) {
+
 }
