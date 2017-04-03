@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"math"
 	"net/http"
@@ -12,7 +13,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/BurntSushi/toml"
 	"github.com/ziutek/rrd"
 )
 
@@ -188,18 +188,15 @@ func annotations(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(json))
 }
 
-func ReadConfigFile(filename string) error {
-	_, err := toml.DecodeFile(filename, &config)
-	return err
+func SetArgs() {
+	flag.IntVar(&config.Server.Port, "p", 9000, "Server port.")
+	flag.StringVar(&config.Server.RrdPath, "r", "./sample/", "Path for a directory that keeps RRD files.")
+	flag.IntVar(&config.Server.Step, "s", 10, "Step in second.")
+	flag.Parse()
 }
 
 func main() {
-	configFilePath := "config.toml"
-	err := ReadConfigFile(configFilePath)
-	if err != nil {
-		fmt.Println("ERROR: Cannot read config file ", configFilePath)
-		panic(err)
-	}
+	SetArgs()
 
 	http.HandleFunc("/search", search)
 	http.HandleFunc("/query", query)

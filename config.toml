@@ -1,4 +1,0 @@
-[server]
-rrdpath = "sample/"
-step    = 10
-port    = 9000
