@@ -5,6 +5,11 @@ A simple HTTP server that reads RRD files and responds to requests from Grafana 
 [![CircleCI](https://img.shields.io/circleci/project/github/doublemarket/grafana-rrd-server.svg)](https://github.com/doublemarket/grafana-rrd-server)
 [![GitHub release](https://img.shields.io/github/release/doublemarket/grafana-rrd-server.svg)](https://github.com/doublemarket/grafana-rrd-server/releases)
 
+This server supports all endpoints (urls) defined in the Grafana Simple JSON Datasource plugin documentation](https://grafana.net/plugins/grafana-simple-json-datasource) but:
+
+- The `/annotation` endpoint always returns the same result `{"message":"annotations"}`. (the endpoint exists but no features are implemented)
+- You can use `*` as a wildcard in the `target` values (but not for `ds`) for the `/query` endpoint.
+
 # Requirement
 
 - librrd-dev (rrdtool)
