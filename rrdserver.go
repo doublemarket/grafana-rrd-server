@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/mattn/go-zglob"
 	"github.com/ziutek/rrd"
 )
 
@@ -128,43 +129,50 @@ func query(w http.ResponseWriter, r *http.Request) {
 
 	var result []QueryResponse
 	for _, target := range queryRequest.Targets {
-		var points [][]float64
 		ds := target.Target[strings.LastIndex(target.Target, ":")+1 : len(target.Target)]
 		rrdDsRep := regexp.MustCompile(`:` + ds + `$`)
-		fPath := rrdDsRep.ReplaceAllString(target.Target, "")
-		fPath = config.Server.RrdPath + strings.Replace(fPath, ":", "/", -1) + ".rrd"
-		if _, err := os.Stat(fPath); err != nil {
-			fmt.Println("File", fPath, "does not exist")
-			continue
-		}
-		infoRes, err := rrd.Info(fPath)
-		if err != nil {
-			fmt.Println("ERROR: Cannot retrieve information from ", fPath)
-			fmt.Println(err)
-		}
-		lastUpdate := time.Unix(int64(infoRes["last_update"].(uint)), 0)
-		if to.After(lastUpdate) && lastUpdate.After(from) {
-			to = lastUpdate
-		}
-		fetchRes, err := rrd.Fetch(fPath, "AVERAGE", from, to, time.Duration(config.Server.Step)*time.Second)
-		if err != nil {
-			fmt.Println("ERROR: Cannot retrieve time series data from ", fPath)
-			fmt.Println(err)
-		}
-		timestamp := fetchRes.Start
-		dsIndex := int(infoRes["ds.index"].(map[string]interface{})[ds].(uint))
-		// The last point is likely to contain wrong data (mostly a big number)
-		// RowCnt-1 is for ignoring the last point (temporary solution)
-		for i := 0; i < fetchRes.RowCnt-1; i++ {
-			value := fetchRes.ValueAt(dsIndex, i)
-			if !math.IsNaN(value) {
-				points = append(points, []float64{value, float64(timestamp.Unix()) * 1000})
-			}
-			timestamp = timestamp.Add(fetchRes.Step)
-		}
-		defer fetchRes.FreeValues()
+		fileSearchPath := rrdDsRep.ReplaceAllString(target.Target, "")
+		fileSearchPath = config.Server.RrdPath + strings.Replace(fileSearchPath, ":", "/", -1) + ".rrd"
 
-		result = append(result, QueryResponse{Target: target.Target, DataPoints: points})
+		fileNameArray, _ := zglob.Glob(fileSearchPath)
+		for _, filePath := range fileNameArray {
+			var points [][]float64
+			if _, err = os.Stat(filePath); err != nil {
+				fmt.Println("File", filePath, "does not exist")
+				continue
+			}
+			infoRes, err := rrd.Info(filePath)
+			if err != nil {
+				fmt.Println("ERROR: Cannot retrieve information from ", filePath)
+				fmt.Println(err)
+			}
+			lastUpdate := time.Unix(int64(infoRes["last_update"].(uint)), 0)
+			if to.After(lastUpdate) && lastUpdate.After(from) {
+				to = lastUpdate
+			}
+			fetchRes, err := rrd.Fetch(filePath, "AVERAGE", from, to, time.Duration(config.Server.Step)*time.Second)
+			if err != nil {
+				fmt.Println("ERROR: Cannot retrieve time series data from ", filePath)
+				fmt.Println(err)
+			}
+			timestamp := fetchRes.Start
+			dsIndex := int(infoRes["ds.index"].(map[string]interface{})[ds].(uint))
+			// The last point is likely to contain wrong data (mostly a big number)
+			// RowCnt-1 is for ignoring the last point (temporary solution)
+			for i := 0; i < fetchRes.RowCnt-1; i++ {
+				value := fetchRes.ValueAt(dsIndex, i)
+				if !math.IsNaN(value) {
+					points = append(points, []float64{value, float64(timestamp.Unix()) * 1000})
+				}
+				timestamp = timestamp.Add(fetchRes.Step)
+			}
+			defer fetchRes.FreeValues()
+
+			extractedTarget := strings.Replace(filePath, ".rrd", "", -1)
+			extractedTarget = strings.Replace(extractedTarget, config.Server.RrdPath, "", -1)
+			extractedTarget = strings.Replace(extractedTarget, "/", ":", -1) + ":" + ds
+			result = append(result, QueryResponse{Target: extractedTarget, DataPoints: points})
+		}
 	}
 	json, err := json.Marshal(result)
 	if err != nil {

@@ -108,7 +108,8 @@ func TestQuery(t *testing.T) {
 	  "intervalMs":60000,
 	  "targets":[
 	    {"target":"sample:ClientJobsIdle","refId":"A","hide":false,"type":"timeserie"},
-	    {"target":"sample:ClientJobsRunning","refId":"B","hide":false,"type":"timeserie"}
+	    {"target":"sample:ClientJobsRunning","refId":"B","hide":false,"type":"timeserie"},
+			{"target":"percent-*:value","refId":"B","hide":false,"type":"timeserie"}
 	  ],
 	  "format":"json",
 	  "maxDataPoints":1812
@@ -141,10 +142,31 @@ func TestQuery(t *testing.T) {
 		t.Fatalf("Error at decoding JSON response. %v", err)
 	}
 
+	clientJobsIdleExists := false
+	percentIdleExists := false
+	percentUserExists := false
 	for _, v := range qrs {
 		if len(v.Target) < 0 {
 			t.Fatalf("Response is empty.")
 		}
+		if v.Target == "sample:ClientJobsIdle" {
+			clientJobsIdleExists = true
+		}
+		if v.Target == "sample:percent-idle:value" {
+			percentIdleExists = true
+		}
+		if v.Target == "sample:percent-user:value" {
+			percentUserExists = true
+		}
+	}
+	if !clientJobsIdleExists {
+		t.Fatal("sample:ClientJobsIdle isn't contained in the response.")
+	}
+	if !percentIdleExists {
+		t.Fatal("sample:percent-idle:value isn't contained in the response.")
+	}
+	if !percentUserExists {
+		t.Fatal("sample:percent-user:value isn't contained in the response.")
 	}
 }
 
