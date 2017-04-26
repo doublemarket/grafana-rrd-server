@@ -28,7 +28,7 @@ type QueryRequest struct {
 	PanelId int `json:"panelId"`
 	Range   struct {
 		From string `json:"from"`
-		To   string `jsong:"to"`
+		To   string `json:"to"`
 		Raw  struct {
 			From string `json:"from"`
 			To   string `json:"to"`
@@ -36,7 +36,7 @@ type QueryRequest struct {
 	} `json:"range"`
 	RangeRaw struct {
 		From string `json:"from"`
-		To   string `jsong:"to"`
+		To   string `json:"to"`
 	} `json:"rangeRaw"`
 	Interval   string `json:"interval"`
 	IntervalMs int    `json:"intervalMs"`
