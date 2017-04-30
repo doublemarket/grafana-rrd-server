@@ -2,7 +2,8 @@
 
 A simple HTTP server that reads RRD files and responds to requests from Grafana with [Grafana Simple JSON Datasource plugin](https://grafana.net/plugins/grafana-simple-json-datasource).
 
-[![CircleCI](https://img.shields.io/circleci/project/github/doublemarket/grafana-rrd-server.svg)](https://github.com/doublemarket/grafana-rrd-server)
+[![CircleCI](https://img.shields.io/circleci/project/github/doublemarket/grafana-rrd-server.svg)](https://circleci.com/gh/doublemarket/grafana-rrd-server)
+[![Coveralls](https://img.shields.io/coveralls/doublemarket/grafana-rrd-server.svg)](https://coveralls.io/github/doublemarket/grafana-rrd-server)
 [![GitHub release](https://img.shields.io/github/release/doublemarket/grafana-rrd-server.svg)](https://github.com/doublemarket/grafana-rrd-server/releases)
 
 This server supports all endpoints (urls) defined in the [Grafana Simple JSON Datasource plugin documentation](https://grafana.net/plugins/grafana-simple-json-datasource) but:
