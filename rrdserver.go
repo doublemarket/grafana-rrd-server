@@ -216,5 +216,6 @@ func main() {
 	err := http.ListenAndServe(":"+strconv.Itoa(config.Server.Port), nil)
 	if err != nil {
 		fmt.Println("ERROR:", err)
+		os.Exit(1)
 	}
 }
