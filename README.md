@@ -61,6 +61,7 @@ This server supports all endpoints (urls) defined in the [Grafana Simple JSON Da
 
    - `-h` : Shows help messages.
    - `-p` : Specifies server port. (default: 9000)
+   - `-i` : Specifies server listen address. (default: any)
    - `-r` : Specifies a directory path keeping RRD files. (default: "./sample/")
      - The server recursively searches RRD files under the directory and returns a list of them for the `/search` endpoint.
    - `-s` : Default graph step in second. (default: 10)
