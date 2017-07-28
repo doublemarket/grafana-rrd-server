@@ -213,7 +213,7 @@ func main() {
 	http.HandleFunc("/annotations", annotations)
 	http.HandleFunc("/", hello)
 
-	err := http.ListenAndServe(":"+strconv.Itoa(config.Server.Port), nil)
+	err := http.ListenAndServe(config.Server.IpAddr+":"+strconv.Itoa(config.Server.Port), nil)
 	if err != nil {
 		fmt.Println("ERROR:", err)
 		os.Exit(1)
