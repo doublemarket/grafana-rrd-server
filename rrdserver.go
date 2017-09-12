@@ -91,6 +91,7 @@ type Config struct {
 type ServerConfig struct {
 	RrdPath            string
 	Step               int
+	IpAddr             string
 	Port               int
 	AnnotationFilePath string
 }
@@ -263,6 +264,7 @@ func annotations(w http.ResponseWriter, r *http.Request) {
 }
 
 func SetArgs() {
+	flag.StringVar(&config.Server.IpAddr, "i", "", "Network interface IP address to listen on. (default: any)")
 	flag.IntVar(&config.Server.Port, "p", 9000, "Server port.")
 	flag.StringVar(&config.Server.RrdPath, "r", "./sample/", "Path for a directory that keeps RRD files.")
 	flag.IntVar(&config.Server.Step, "s", 10, "Step in second.")
@@ -278,5 +280,9 @@ func main() {
 	http.HandleFunc("/annotations", annotations)
 	http.HandleFunc("/", hello)
 
-	http.ListenAndServe(":"+strconv.Itoa(config.Server.Port), nil)
+	err := http.ListenAndServe(config.Server.IpAddr+":"+strconv.Itoa(config.Server.Port), nil)
+	if err != nil {
+		fmt.Println("ERROR:", err)
+		os.Exit(1)
+	}
 }

@@ -1,8 +1,12 @@
 hash: 43017bc74b202d332d1654c8eddd004aeaff12e9dd381ef8fd50aa11b5d8a70b
-updated: 2017-01-18T16:48:50.170691918+09:00
+updated: 2017-07-15T15:07:37.366934589+02:00
 imports:
 - name: github.com/BurntSushi/toml
   version: bbd5bb678321a0d6e58f1099321dfa73391c1b6f
+- name: github.com/mattn/go-zglob
+  version: 95345c4e1c0ebc9d16a3284177f09360f4d20fab
+  subpackages:
+  - fastwalk
 - name: github.com/ziutek/rrd
   version: 9b5311f435c8f7e62f71ffe15b4566e6cf840738
 testImports: []
