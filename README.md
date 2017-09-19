@@ -8,7 +8,6 @@ A simple HTTP server that reads RRD files and responds to requests from Grafana 
 
 This server supports all endpoints (urls) defined in the [Grafana Simple JSON Datasource plugin documentation](https://grafana.net/plugins/grafana-simple-json-datasource) but:
 
-- The `/annotation` endpoint always returns the same result `{"message":"annotations"}`. (the endpoint exists but no features are implemented)
 - You can use `*` as a wildcard in the `target` values (but not for `ds`) for the `/query` endpoint.
 
 # Requirement
@@ -64,6 +63,7 @@ This server supports all endpoints (urls) defined in the [Grafana Simple JSON Da
    - `-i` : Specifies server listen address. (default: any)
    - `-r` : Specifies a directory path keeping RRD files. (default: "./sample/")
      - The server recursively searches RRD files under the directory and returns a list of them for the `/search` endpoint.
+   - `-a` : Specifies the annotations file. It should be a CSV file which has a title line at the top like [the sample file](https://github.com/doublemarket/grafana-rrd-server/tree/master/sample/annotations.csv).
    - `-s` : Default graph step in second. (default: 10)
      - You can see the step for your RRD file using:
        ```

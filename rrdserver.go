@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gocarina/gocsv"
 	"github.com/mattn/go-zglob"
 	"github.com/ziutek/rrd"
 )
@@ -25,7 +26,7 @@ type QueryResponse struct {
 }
 
 type QueryRequest struct {
-	PanelId int `json:"panelId"`
+	PanelId int64 `json:"panelId"`
 	Range   struct {
 		From string `json:"from"`
 		To   string `json:"to"`
@@ -39,7 +40,7 @@ type QueryRequest struct {
 		To   string `json:"to"`
 	} `json:"rangeRaw"`
 	Interval   string `json:"interval"`
-	IntervalMs int    `json:"intervalMs"`
+	IntervalMs int64  `json:"intervalMs"`
 	Targets    []struct {
 		Target string `json:"target"`
 		RefID  string `json:"refId"`
@@ -47,7 +48,40 @@ type QueryRequest struct {
 		Type   string `json:"type"`
 	} `json:"targets"`
 	Format        string `json:"format"`
-	MaxDataPoints int    `json:"maxDataPoints"`
+	MaxDataPoints int64  `json:"maxDataPoints"`
+}
+
+type AnnotationResponse struct {
+	Annotation string `json:"annotation"`
+	Time       int64  `json:"time"`
+	Title      string `json:"title"`
+	Tags       string `json:"tags"`
+	Text       string `json:"text"`
+}
+
+type AnnotationCSV struct {
+	Time  int64  `csv:"time"`
+	Title string `csv:"title"`
+	Tags  string `csv:"tags"`
+	Text  string `csv:"text"`
+}
+
+type AnnotationRequest struct {
+	Range struct {
+		From string `json:"from"`
+		To   string `json:"to"`
+	} `json:"range"`
+	RangeRaw struct {
+		From string `json:"from"`
+		To   string `json:"to"`
+	} `json:"rangeRaw"`
+	Annotation struct {
+		Name       string `json:"name"`
+		Datasource string `json:"datasource"`
+		IconColor  string `json:"iconColor"`
+		Enable     bool   `json:"enable"`
+		Query      string `json:"query"`
+	} `json:"annotation"`
 }
 
 type Config struct {
@@ -55,24 +89,33 @@ type Config struct {
 }
 
 type ServerConfig struct {
-	RrdPath string
-	Step    int
-	Port    int
-	IpAddr  string
+	RrdPath            string
+	Step               int
+	IpAddr             string
+	Port               int
+	AnnotationFilePath string
 }
 
 type ErrorResponse struct {
 	Message string `json:"message"`
 }
 
-func hello(w http.ResponseWriter, r *http.Request) {
-	result := ErrorResponse{Message: "hello"}
+func respondJSON(w http.ResponseWriter, result interface{}) {
+	json, err := json.Marshal(result)
+	if err != nil {
+		fmt.Println("ERROR: Cannot convert response data into JSON")
+		fmt.Println(err)
+	}
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	w.Header().Set("Access-Control-Allow-Headers", "accept, content-type")
 	w.Header().Set("Access-Control-Allow-Methods", "GET,POST,HEAD,OPTIONS")
-	json, _ := json.Marshal(result)
 	w.Write([]byte(json))
+}
+
+func hello(w http.ResponseWriter, r *http.Request) {
+	result := ErrorResponse{Message: "hello"}
+	respondJSON(w, result)
 }
 
 func search(w http.ResponseWriter, r *http.Request) {
@@ -100,12 +143,7 @@ func search(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(err)
 	}
 
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Headers", "accept, content-type")
-	w.Header().Set("Access-Control-Allow-Methods", "GET,POST,HEAD,OPTIONS")
-	json, _ := json.Marshal(result)
-	w.Write([]byte(json))
+	respondJSON(w, result)
 }
 
 func query(w http.ResponseWriter, r *http.Request) {
@@ -175,33 +213,62 @@ func query(w http.ResponseWriter, r *http.Request) {
 			result = append(result, QueryResponse{Target: extractedTarget, DataPoints: points})
 		}
 	}
-	json, err := json.Marshal(result)
-	if err != nil {
-		fmt.Println("ERROR: Cannot convert response data into JSON")
-		fmt.Println(err)
-	}
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Headers", "accept, content-type")
-	w.Header().Set("Access-Control-Allow-Methods", "GET,POST,HEAD,OPTIONS")
-	w.Write([]byte(json))
+	respondJSON(w, result)
 }
 
 func annotations(w http.ResponseWriter, r *http.Request) {
-	result := ErrorResponse{Message: "annotations"}
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Headers", "accept, content-type")
-	w.Header().Set("Access-Control-Allow-Methods", "GET,POST,HEAD,OPTIONS")
-	json, _ := json.Marshal(result)
-	w.Write([]byte(json))
+	if r.Method == "OPTIONS" {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Headers", "accept, content-type")
+		w.Header().Set("Access-Control-Allow-Methods", "POST")
+		w.Write(nil)
+		return
+	}
+
+	if config.Server.AnnotationFilePath == "" {
+		result := ErrorResponse{Message: "Not configured"}
+		respondJSON(w, result)
+	} else {
+		decoder := json.NewDecoder(r.Body)
+		var annotationRequest AnnotationRequest
+		err := decoder.Decode(&annotationRequest)
+		defer r.Body.Close()
+		if err != nil {
+			result := ErrorResponse{Message: "Cannot decode the request"}
+			respondJSON(w, result)
+		} else {
+			csvFile, err := os.OpenFile(config.Server.AnnotationFilePath, os.O_RDONLY, os.ModePerm)
+			if err != nil {
+				fmt.Println("ERROR: Cannot open the annotations CSV file ", config.Server.AnnotationFilePath)
+				fmt.Println(err)
+			}
+			defer csvFile.Close()
+			annots := []*AnnotationCSV{}
+
+			if err := gocsv.UnmarshalFile(csvFile, &annots); err != nil {
+				fmt.Println("ERROR: Cannot unmarshal the annotations CSV file.")
+				fmt.Println(err)
+			}
+
+			result := []AnnotationResponse{}
+			from, _ := time.Parse(time.RFC3339Nano, annotationRequest.Range.From)
+			to, _ := time.Parse(time.RFC3339Nano, annotationRequest.Range.To)
+			for _, a := range annots {
+				if (from.Unix()*1000) <= a.Time && a.Time <= (to.Unix()*1000) {
+					result = append(result, AnnotationResponse{Annotation: "annotation", Time: a.Time, Title: a.Title, Tags: a.Tags, Text: a.Text})
+				}
+			}
+			respondJSON(w, result)
+		}
+	}
 }
 
 func SetArgs() {
+	flag.StringVar(&config.Server.IpAddr, "i", "", "Network interface IP address to listen on. (default: any)")
 	flag.IntVar(&config.Server.Port, "p", 9000, "Server port.")
 	flag.StringVar(&config.Server.RrdPath, "r", "./sample/", "Path for a directory that keeps RRD files.")
 	flag.IntVar(&config.Server.Step, "s", 10, "Step in second.")
-	flag.StringVar(&config.Server.IpAddr, "i", "", "Network interface IP address to listen on. (default: any)")
+	flag.StringVar(&config.Server.AnnotationFilePath, "a", "", "Path for a file that has annotations.")
 	flag.Parse()
 }
 

@@ -171,17 +171,33 @@ func TestQuery(t *testing.T) {
 }
 
 func TestAnnotations(t *testing.T) {
+	config.Server.AnnotationFilePath = "./sample/annotations.csv"
+
 	ts := httptest.NewServer(http.HandlerFunc(annotations))
 	defer ts.Close()
 
-	r, err := http.Get(ts.URL)
-	if err != nil {
-		t.Fatalf("Error at a GET request. %v", err)
-	}
+	requestJSON := `{
+		"range": {
+			"from": "2017-05-14T00:00:00.000Z",
+			"to": "2017-05-14T23:59:59.000Z"
+		},
+		"rangeRaw": {
+			"from": "now-24h",
+			"to": "now"
+		},
+		"annotation": {
+			"name": "deploy",
+			"datasource": "Simple JSON Datasource",
+			"iconColor": "rgba(255, 96, 96, 1)",
+			"enable": true,
+			"query": "#deploy"
+		}
+	}`
 
-	data, err := ioutil.ReadAll(r.Body)
+	reader := strings.NewReader(requestJSON)
+	r, err := http.Post(ts.URL, "application/json; charset=utf-8", reader)
 	if err != nil {
-		t.Fatalf("Error by ioutil.ReadAll(). %v", err)
+		t.Fatalf("Error at an POST request. %v", err)
 	}
 
 	if r.StatusCode != 200 {
@@ -189,8 +205,57 @@ func TestAnnotations(t *testing.T) {
 		return
 	}
 
-	if "{\"message\":\"annotations\"}" != string(data) {
-		t.Fatalf("Data Error. %v", string(data))
+	if r.Header.Get("Access-Control-Allow-Origin") != "*" {
+		t.Fatalf("Header Access-Control-Allow-Origin is invalid. %s", r.Header.Get("Access-Control-Allow-Origin"))
+	}
+	if r.Header.Get("Access-Control-Allow-Headers") != "accept, content-type" {
+		t.Fatalf("Header Access-Control-Allow-Headers is invalid. %s", r.Header.Get("Access-Control-Allow-Headers"))
+	}
+	if r.Header.Get("Access-Control-Allow-Methods") != "GET,POST,HEAD,OPTIONS" {
+		t.Fatalf("Header Access-Control-Allow-Methods is invalid. %s", r.Header.Get("Access-Control-Allow-Methods"))
+	}
+
+	decoder := json.NewDecoder(r.Body)
+	var ars = []AnnotationResponse{}
+	err = decoder.Decode(&ars)
+	if err != nil {
+		t.Fatalf("Error at decoding JSON response. %v", err)
+	}
+
+	timeExists := false
+	titleExists := false
+	timeOutSideRangeExists := false
+	titleOutSideRangeExists := false
+	for _, v := range ars {
+		if len(v.Title) < 0 {
+			t.Fatalf("Response is empty.")
+		}
+		if v.Time == 1494763899000 {
+			timeExists = true
+		}
+		if v.Title == "App restarted" {
+			titleExists = true
+		}
+
+		if v.Time == 1480917950000 {
+			timeOutSideRangeExists = true
+		}
+		if v.Title == "Rebooted" {
+			titleOutSideRangeExists = true
+		}
+	}
+
+	if !timeExists {
+		t.Fatal("The expected time value isn't contained in the response.")
+	}
+	if !titleExists {
+		t.Fatal("The expected time value isn't contained in the response.")
+	}
+	if timeOutSideRangeExists {
+		t.Fatal("The time value that shouldn't be contained is found.")
+	}
+	if titleOutSideRangeExists {
+		t.Fatal("The title value that shouldn't be contained is found.")
 	}
 }
 
