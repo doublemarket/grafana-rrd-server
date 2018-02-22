@@ -32,6 +32,11 @@ This server supports all endpoints (urls) defined in the [Grafana Simple JSON Da
    sudo yum install rrdtool-devel
    ```
 
+   On openSUSE
+   ```
+   sudo zypper in rrdtool-devel
+   ```
+
    On Mac:
 
    ```
