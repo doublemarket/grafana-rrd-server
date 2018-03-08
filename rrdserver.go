@@ -94,6 +94,7 @@ type ServerConfig struct {
 	IpAddr             string
 	Port               int
 	AnnotationFilePath string
+	Multiplier         int
 }
 
 type ErrorResponse struct {
@@ -201,7 +202,8 @@ func query(w http.ResponseWriter, r *http.Request) {
 			for i := 0; i < fetchRes.RowCnt-1; i++ {
 				value := fetchRes.ValueAt(dsIndex, i)
 				if !math.IsNaN(value) {
-					points = append(points, []float64{value, float64(timestamp.Unix()) * 1000})
+					product := float64(config.Server.Multiplier) * value
+					points = append(points, []float64{product, float64(timestamp.Unix()) * 1000})
 				}
 				timestamp = timestamp.Add(fetchRes.Step)
 			}
@@ -269,6 +271,7 @@ func SetArgs() {
 	flag.StringVar(&config.Server.RrdPath, "r", "./sample/", "Path for a directory that keeps RRD files.")
 	flag.IntVar(&config.Server.Step, "s", 10, "Step in second.")
 	flag.StringVar(&config.Server.AnnotationFilePath, "a", "", "Path for a file that has annotations.")
+	flag.IntVar(&config.Server.Multiplier, "m", 1, "Value multiplier.")
 	flag.Parse()
 }
 
