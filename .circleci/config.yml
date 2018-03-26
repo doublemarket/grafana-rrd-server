@@ -12,11 +12,11 @@ jobs:
       - run:
           name: Install prerequired packges
           command: |
-            apt-get install software-properties-common python-software-properties
-            add-apt-repository -y ppa:masterminds/glide
-            apt-get update
-            apt install -y librrd-dev
-            apt install -y glide
+            /usr/bin/apt update
+            /usr/bin/apt install software-properties-common python-software-properties
+            /usr/bin/add-apt-repository -y ppa:masterminds/glide
+            /usr/bin/apt update
+            /usr/bin/apt install -y librrd-dev glide
             mkdir -p ${GOPATH}/src/github.com/${CIRCLE_PROJECT_USERNAME}
             ln -s ${HOME}/${CIRCLE_PROJECT_REPONAME} ${BUILD_PATH}
             glide i
@@ -36,11 +36,10 @@ jobs:
       - run:
           name: Install prerequired packges
           command: |
-            apt-get install software-properties-common python-software-properties
-            add-apt-repository -y ppa:masterminds/glide
-            apt-get update
-            apt install -y librrd-dev
-            apt install -y glide
+            /usr/bin/apt install software-properties-common python-software-properties
+            /usr/bin/add-apt-repository -y ppa:masterminds/glide
+            /usr/bin/apt update
+            /usr/bin/apt install -y librrd-dev glide
             mkdir -p ${GOPATH}/src/github.com/${CIRCLE_PROJECT_USERNAME}
             ln -s ${HOME}/${CIRCLE_PROJECT_REPONAME} ${BUILD_PATH}
             glide i
