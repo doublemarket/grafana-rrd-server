@@ -12,6 +12,7 @@ jobs:
       - run:
           name: Install prerequired packges
           command: |
+            apt-get install software-properties-common python-software-properties
             add-apt-repository -y ppa:masterminds/glide
             apt-get update
             apt install -y librrd-dev
@@ -35,6 +36,7 @@ jobs:
       - run:
           name: Install prerequired packges
           command: |
+            apt-get install software-properties-common python-software-properties
             add-apt-repository -y ppa:masterminds/glide
             apt-get update
             apt install -y librrd-dev
