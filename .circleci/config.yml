@@ -2,7 +2,7 @@ version: 2
 jobs:
   test:
     docker:
-      - image: circleci/go:1.10
+      - image: circleci/golang:1.10
     environment:
       GOROOT: ""
       GOPATH: "${HOME}/.go_project"
@@ -25,7 +25,7 @@ jobs:
             go test
   deploy:
     docker:
-      - image: circleci/go:1.10
+      - image: circleci/golang:1.10
     environment:
       GOROOT: ""
       GOPATH: "${HOME}/.go_project"
