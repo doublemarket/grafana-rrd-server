@@ -1,0 +1,72 @@
+version: 2
+jobs:
+  test:
+    docker:
+      - image: golang:1.10-stretch
+    environment:
+      GOROOT: ""
+      GOPATH: "/root/.go_project"
+      PATH: "/root/.go_project/bin:/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/go/bin"
+      IMPORT_PATH: "github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME"
+    steps:
+      - checkout
+      - run:
+          name: Install prerequired packges
+          command: |
+            apt update
+            apt install -y software-properties-common python3-software-properties
+            apt install -y librrd-dev golang-glide
+            mkdir -p $GOPATH/src/github.com/$CIRCLE_PROJECT_USERNAME
+            cd $GOPATH/src/github.com/$CIRCLE_PROJECT_USERNAME
+            ln -s /root/project $CIRCLE_PROJECT_REPONAME
+            cd $CIRCLE_PROJECT_REPONAME
+            glide i
+      - run:
+          name: Run tests
+          command: |
+            cd $GOPATH/src/github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME
+            go test
+  deploy:
+    docker:
+      - image: golang:1.10-stretch
+    environment:
+      GOROOT: ""
+      GOPATH: "/root/.go_project"
+      PATH: "/root/.go_project/bin:/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/go/bin"
+      IMPORT_PATH: "github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME"
+    steps:
+      - checkout
+      - run:
+          name: Install prerequired packges
+          command: |
+            apt update
+            apt install -y software-properties-common python3-software-properties
+            apt install -y librrd-dev golang-glide
+            mkdir -p $GOPATH/src/github.com/$CIRCLE_PROJECT_USERNAME
+            cd $GOPATH/src/github.com/$CIRCLE_PROJECT_USERNAME
+            ln -s /root/project $CIRCLE_PROJECT_REPONAME
+            cd $CIRCLE_PROJECT_REPONAME
+            glide i
+      - run:
+          name: Deploy
+          tag: /v[0-9]+(\.[0-9]+)+/
+          command: |
+            cd $GOPATH/src/github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME
+            go get github.com/mitchellh/gox
+            go get github.com/tcnksm/ghr
+            gox -osarch "linux/amd64" -ldflags "-X main.Version=$BUILD_VERSION -X main.BuildDate=$BUILD_DATE" -output "dist/{{.Dir}}_{{.OS}}_{{.Arch}}"
+            gzip dist/*
+            ghr -t $GITHUB_TOKEN -u $CIRCLE_PROJECT_USERNAME -r $CIRCLE_PROJECT_REPONAME --replace $(git describe --tags) dist/
+workflows:
+  version: 2
+  test_and_deploy:
+    jobs:
+      - test
+      - deploy:
+          requires:
+            - test
+          filters:
+            tags:
+              only: /v[0-9]+(\.[0-9]+)+/
+            branches:
+              ignore: /.*/
