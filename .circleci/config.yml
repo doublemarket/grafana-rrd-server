@@ -5,8 +5,8 @@ jobs:
       - image: golang:1.10-stretch
     environment:
       GOROOT: ""
-      GOPATH: "${HOME}/.go_project"
-      PATH: "${GOPATH}/bin:/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/go/bin"
+      GOPATH: "$HOME/.go_project"
+      PATH: "$GOPATH/bin:/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/go/bin"
       IMPORT_PATH: "github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME"
     steps:
       - run:
@@ -30,8 +30,8 @@ jobs:
       - image: golang:1.10-stretch
     environment:
       GOROOT: ""
-      GOPATH: "${HOME}/.go_project"
-      PATH: "${GOPATH}/bin:/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/go/bin"
+      GOPATH: "$HOME/.go_project"
+      PATH: "$GOPATH/bin:/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/go/bin"
       IMPORT_PATH: "github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME"
     steps:
       - run:
