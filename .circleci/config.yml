@@ -15,12 +15,11 @@ jobs:
           command: |
             apt update
             apt install -y software-properties-common python3-software-properties
-            #add-apt-repository -y ppa:masterminds/glide
-            #apt update
-            #apt install -y librrd-dev glide
             apt install -y librrd-dev golang-glide
             mkdir -p $GOPATH/src/github.com/$CIRCLE_PROJECT_USERNAME
-            ln -s $HOME/$CIRCLE_PROJECT_REPONAME $BUILD_PATH
+            cd $GOPATH/src/github.com/$CIRCLE_PROJECT_USERNAME
+            ln -s /root/project $CIRCLE_PROJECT_REPONAME
+            cd $CIRCLE_PROJECT_REPONAME
             glide i
       - run:
           name: Run tests
@@ -41,14 +40,12 @@ jobs:
           command: |
             apt update
             apt install -y software-properties-common python3-software-properties
-            #add-apt-repository -y ppa:masterminds/glide
-            #apt update
-            #apt install -y librrd-dev glide
             apt install -y librrd-dev golang-glide
             mkdir -p $GOPATH/src/github.com/$CIRCLE_PROJECT_USERNAME
-            ln -s $HOME/$CIRCLE_PROJECT_REPONAME $BUILD_PATH
+            cd $GOPATH/src/github.com/$CIRCLE_PROJECT_USERNAME
+            ln -s /root/project $CIRCLE_PROJECT_REPONAME
+            cd $CIRCLE_PROJECT_REPONAME
             glide i
-      - checkout
       - run:
           name: Deploy
           tag: /v[0-9]+(\.[0-9]+)+/
