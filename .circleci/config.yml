@@ -49,7 +49,6 @@ jobs:
             glide i
       - run:
           name: Deploy
-          tag: /v[0-9]+(\.[0-9]+)+/
           command: |
             cd $GOPATH/src/github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME
             go get github.com/mitchellh/gox
@@ -61,7 +60,10 @@ workflows:
   version: 2
   test_and_deploy:
     jobs:
-      - test
+      - test:
+          filters:
+            tags:
+              only: /.*/
       - deploy:
           requires:
             - test
