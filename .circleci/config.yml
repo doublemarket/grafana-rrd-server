@@ -9,6 +9,7 @@ jobs:
       PATH: "$GOPATH/bin:/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/go/bin"
       IMPORT_PATH: "github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME"
     steps:
+      - checkout
       - run:
           name: Install prerequired packges
           command: |
@@ -34,6 +35,7 @@ jobs:
       PATH: "$GOPATH/bin:/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/go/bin"
       IMPORT_PATH: "github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME"
     steps:
+      - checkout
       - run:
           name: Install prerequired packges
           command: |
