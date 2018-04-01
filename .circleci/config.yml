@@ -24,6 +24,7 @@ jobs:
       - run:
           name: Run tests
           command: |
+            cd $GOPATH/src/github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME
             go test
   deploy:
     docker:
