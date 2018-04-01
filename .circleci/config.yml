@@ -6,7 +6,7 @@ jobs:
     environment:
       GOROOT: ""
       GOPATH: "${HOME}/.go_project"
-      PATH: "${GOPATH}/bin:/bin:/sbin:/usr/bin:/usr/sbin"
+      PATH: "${GOPATH}/bin:/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/go/bin"
       IMPORT_PATH: "github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME"
     steps:
       - run:
@@ -31,7 +31,7 @@ jobs:
     environment:
       GOROOT: ""
       GOPATH: "${HOME}/.go_project"
-      PATH: "${GOPATH}/bin:/bin:/sbin:/usr/bin:/usr/sbin"
+      PATH: "${GOPATH}/bin:/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/go/bin"
       IMPORT_PATH: "github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME"
     steps:
       - run:
