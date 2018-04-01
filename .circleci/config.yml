@@ -6,7 +6,7 @@ jobs:
     environment:
       GOROOT: ""
       GOPATH: "/root/.go_project"
-      PATH: "$GOPATH/bin:/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/go/bin"
+      PATH: "/root/.go_project/bin:/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/go/bin"
       IMPORT_PATH: "github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME"
     steps:
       - checkout
@@ -32,7 +32,7 @@ jobs:
     environment:
       GOROOT: ""
       GOPATH: "/root/.go_project"
-      PATH: "$GOPATH/bin:/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/go/bin"
+      PATH: "/root/.go_project/bin:/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/go/bin"
       IMPORT_PATH: "github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME"
     steps:
       - checkout
@@ -51,6 +51,7 @@ jobs:
           name: Deploy
           tag: /v[0-9]+(\.[0-9]+)+/
           command: |
+            cd $GOPATH/src/github.com/$CIRCLE_PROJECT_USERNAME/$CIRCLE_PROJECT_REPONAME
             go get github.com/mitchellh/gox
             go get github.com/tcnksm/ghr
             gox -osarch "linux/amd64" -ldflags "-X main.Version=$BUILD_VERSION -X main.BuildDate=$BUILD_DATE" -output "dist/{{.Dir}}_{{.OS}}_{{.Arch}}"
@@ -68,4 +69,4 @@ workflows:
             tags:
               only: /v[0-9]+(\.[0-9]+)+/
             branches:
-              ignore: /.*/   
+              ignore: /.*/
