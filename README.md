@@ -82,6 +82,52 @@ This server supports all endpoints (urls) defined in the [Grafana Simple JSON Da
 
 5. Create datasource.
 
+# Docker (private repo) / Kubernetes how to:
+1. build your image
+```
+$ docker build -t grafana-rrd-server .
+```
+
+2. run your server
+```
+$ docker run -p 9000:9000 -it grafana-rrd-server
+```
+
+3. list your image, get id
+```
+$ docker image ls
+```
+
+4. tag your release
+```
+$ docker tag <id> <repo>/grafana-rrd-server
+```
+
+5. push build to repo
+```
+$ docker push <repo>/grafana-rrd-server
+```
+
+6. pull from repo
+```
+$ docker pull <repo>/grafana-rrd-server
+```
+
+7. run local image from artifactory
+```
+$ docker run -p 9000:9000 -it <repo>/grafana-rrd-server
+```
+
+8. view sample data
+```
+  - $ open http://localhost:9000/search
+  - $ curl -v http://localhost:9000/search
+```
+
+9. deploy grafana-rrd-server to k8s
+$ TILLER_NAMESPACE=default helm install ./ --name pn-grafana-rrd-server --namespace=default -f ./values.yaml
+$ TILLER_NAMESPACE=default helm upgrade pn-grafana-rrd-server ./ --reuse-values -f ./values.yaml
+
 # Contributing
 
 1. Install librrd-dev (rrdtool).
