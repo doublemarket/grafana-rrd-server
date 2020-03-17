@@ -35,7 +35,7 @@ func TestHello(t *testing.T) {
 func TestSearch(t *testing.T) {
 	SetArgs()
 
-	requestJSON := `{"target":"hoge"}`
+	requestJSON := `{"target":"sample"}`
 	reader := strings.NewReader(requestJSON)
 
 	ts := httptest.NewServer(http.HandlerFunc(search))
