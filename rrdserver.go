@@ -25,6 +25,10 @@ type QueryResponse struct {
 	DataPoints [][]float64 `json:"datapoints"`
 }
 
+type SearchRequest struct {
+    Target string `json:"target"`
+}
+
 type QueryRequest struct {
 	PanelId int64 `json:"panelId"`
 	Range   struct {
@@ -91,6 +95,7 @@ type Config struct {
 type ServerConfig struct {
 	RrdPath            string
 	Step               int
+	SearchCache        int64
 	IpAddr             string
 	Port               int
 	AnnotationFilePath string
@@ -119,29 +124,62 @@ func hello(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, result)
 }
 
-func search(w http.ResponseWriter, r *http.Request) {
-	var result []string
-	err := filepath.Walk(config.Server.RrdPath,
-		func(path string, info os.FileInfo, err error) error {
-			if info.IsDir() || !strings.Contains(info.Name(), ".rrd") {
-				return nil
-			}
-			rel, _ := filepath.Rel(config.Server.RrdPath, path)
-			fName := strings.Replace(rel, ".rrd", "", 1)
-			fName = strings.Replace(fName, "/", ":", -1)
-			infoRes, err := rrd.Info(path)
-			if err != nil {
-				fmt.Println("ERROR: Cannot retrieve information from ", path)
-				fmt.Println(err)
-			}
-			for ds, _ := range infoRes["ds.index"].(map[string]interface{}) {
-				result = append(result, fName+":"+ds)
-			}
+var cacheSearch []string
+var lastSearchUpdate int64
 
-			return nil
-		})
+func search(w http.ResponseWriter, r *http.Request) {
+	decoder := json.NewDecoder(r.Body)
+	var searchRequest SearchRequest
+	err := decoder.Decode(&searchRequest)
 	if err != nil {
+		fmt.Println("ERROR: Cannot decode the request")
 		fmt.Println(err)
+	}
+	defer r.Body.Close()
+
+	target := searchRequest.Target
+
+	now := time.Now().Unix()
+	if len(cacheSearch) == 0 || (lastSearchUpdate + config.Server.SearchCache) < now {
+		lastSearchUpdate = now
+		cacheSearch = []string{}
+
+		fmt.Println("Updating search cache.")
+
+		err := filepath.Walk(config.Server.RrdPath,
+			func(path string, info os.FileInfo, err error) error {
+				if info.IsDir() || !strings.Contains(info.Name(), ".rrd") {
+					return nil
+				}
+				rel, _ := filepath.Rel(config.Server.RrdPath, path)
+				fName := strings.Replace(rel, ".rrd", "", 1)
+				fName = strings.Replace(fName, "/", ":", -1)
+
+				infoRes, err := rrd.Info(path)
+				if err != nil {
+					fmt.Println("ERROR: Cannot retrieve information from ", path)
+					fmt.Println(err)
+				}
+				for ds, _ := range infoRes["ds.index"].(map[string]interface{}) {
+					cacheSearch = append(cacheSearch, fName+":"+ds)
+				}
+
+				return nil
+			})
+
+		if err != nil {
+			fmt.Println(err)
+		}
+	}
+
+	var result = []string{}
+
+	if target != "" {
+		for _, path := range cacheSearch {
+			if (strings.Contains(path, target)) {
+				result = append(result, path)
+			}
+		}
 	}
 
 	respondJSON(w, result)
@@ -270,6 +308,7 @@ func SetArgs() {
 	flag.IntVar(&config.Server.Port, "p", 9000, "Server port.")
 	flag.StringVar(&config.Server.RrdPath, "r", "./sample/", "Path for a directory that keeps RRD files.")
 	flag.IntVar(&config.Server.Step, "s", 10, "Step in second.")
+	flag.Int64Var(&config.Server.SearchCache, "c", 600, "Search cache in seconds.")
 	flag.StringVar(&config.Server.AnnotationFilePath, "a", "", "Path for a file that has annotations.")
 	flag.IntVar(&config.Server.Multiplier, "m", 1, "Value multiplier.")
 	flag.Parse()
