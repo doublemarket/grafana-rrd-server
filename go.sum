@@ -1,0 +1,6 @@
+github.com/gocarina/gocsv v0.0.0-20200330101823-46266ca37bd3 h1:B7k6N+JlLM/u1xrIkpifUfE7GRJsZIYHoHbiAa5cSP4=
+github.com/gocarina/gocsv v0.0.0-20200330101823-46266ca37bd3/go.mod h1:5YoVOkjYAQumqlV356Hj3xeYh4BdZuLE0/nRkf2NKkI=
+github.com/mattn/go-zglob v0.0.3 h1:6Ry4EYsScDyt5di4OI6xw1bYhOqfE5S33Z1OPy+d+To=
+github.com/mattn/go-zglob v0.0.3/go.mod h1:9fxibJccNxU2cnpIKLRRFA7zX7qhkJIQWBb449FYHOo=
+github.com/ziutek/rrd v0.0.3 h1:tGu7Dy0Z2Ij0qF7/7+fqWBZlM0j2Kp/RoTEG3+zHXjQ=
+github.com/ziutek/rrd v0.0.3/go.mod h1:PAFbtWhFYrVeILz+2a6OKKdLYk8RlPJotQXlj7O0Z0A=
