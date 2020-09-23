@@ -214,7 +214,7 @@ func query(w http.ResponseWriter, r *http.Request) {
 
 		fileNameArray, _ := zglob.Glob(fileSearchPath)
 		for _, filePath := range fileNameArray {
-			var points [][]float64
+			points := make([][]float64, 0)
 			if _, err = os.Stat(filePath); err != nil {
 				fmt.Println("File", filePath, "does not exist")
 				continue
