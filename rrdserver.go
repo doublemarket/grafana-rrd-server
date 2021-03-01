@@ -11,6 +11,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/gocarina/gocsv"
@@ -26,11 +27,11 @@ type QueryResponse struct {
 }
 
 type SearchRequest struct {
-    Target string `json:"target"`
+	Target string `json:"target"`
 }
 
 type QueryRequest struct {
-	PanelId int64 `json:"panelId"`
+	PanelId interface{} `json:"panelId"`
 	Range   struct {
 		From string `json:"from"`
 		To   string `json:"to"`
@@ -106,6 +107,64 @@ type ErrorResponse struct {
 	Message string `json:"message"`
 }
 
+type SearchCache struct {
+	m     sync.Mutex
+	items []string
+}
+
+func NewSearchCache() *SearchCache {
+	return &SearchCache{}
+}
+
+func (w *SearchCache) Get() []string {
+	w.m.Lock()
+	defer w.m.Unlock()
+
+	return w.items
+}
+
+func (w *SearchCache) Update() {
+	newItems := []string{}
+
+	fmt.Println("Updating search cache.")
+	err := filepath.Walk(strings.TrimRight(config.Server.RrdPath, "/")+"/",
+		func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+
+			if info.IsDir() || !strings.Contains(info.Name(), ".rrd") {
+				return nil
+			}
+			rel, _ := filepath.Rel(config.Server.RrdPath, path)
+			fName := strings.Replace(rel, ".rrd", "", 1)
+			fName = strings.Replace(fName, "/", ":", -1)
+
+			infoRes, err := rrd.Info(path)
+			if err != nil {
+				fmt.Println("ERROR: Cannot retrieve information from ", path)
+				fmt.Println(err)
+			}
+			for ds, _ := range infoRes["ds.index"].(map[string]interface{}) {
+				newItems = append(newItems, fName+":"+ds)
+			}
+
+			return nil
+		})
+
+	if err != nil {
+		fmt.Printf("Error walking path: %s\n", err)
+		return
+	}
+
+	w.m.Lock()
+	defer w.m.Unlock()
+	w.items = newItems
+	fmt.Println("Finished updating search cache.")
+}
+
+var searchCache *SearchCache = NewSearchCache()
+
 func respondJSON(w http.ResponseWriter, result interface{}) {
 	json, err := json.Marshal(result)
 	if err != nil {
@@ -124,9 +183,6 @@ func hello(w http.ResponseWriter, r *http.Request) {
 	respondJSON(w, result)
 }
 
-var cacheSearch []string
-var lastSearchUpdate int64
-
 func search(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 	var searchRequest SearchRequest
@@ -139,44 +195,11 @@ func search(w http.ResponseWriter, r *http.Request) {
 
 	target := searchRequest.Target
 
-	now := time.Now().Unix()
-	if len(cacheSearch) == 0 || (lastSearchUpdate + config.Server.SearchCache) < now {
-		lastSearchUpdate = now
-		cacheSearch = []string{}
-
-		fmt.Println("Updating search cache.")
-
-		err := filepath.Walk(config.Server.RrdPath,
-			func(path string, info os.FileInfo, err error) error {
-				if info.IsDir() || !strings.Contains(info.Name(), ".rrd") {
-					return nil
-				}
-				rel, _ := filepath.Rel(config.Server.RrdPath, path)
-				fName := strings.Replace(rel, ".rrd", "", 1)
-				fName = strings.Replace(fName, "/", ":", -1)
-
-				infoRes, err := rrd.Info(path)
-				if err != nil {
-					fmt.Println("ERROR: Cannot retrieve information from ", path)
-					fmt.Println(err)
-				}
-				for ds, _ := range infoRes["ds.index"].(map[string]interface{}) {
-					cacheSearch = append(cacheSearch, fName+":"+ds)
-				}
-
-				return nil
-			})
-
-		if err != nil {
-			fmt.Println(err)
-		}
-	}
-
 	var result = []string{}
 
 	if target != "" {
-		for _, path := range cacheSearch {
-			if (strings.Contains(path, target)) {
+		for _, path := range searchCache.Get() {
+			if strings.Contains(path, target) {
 				result = append(result, path)
 			}
 		}
@@ -321,6 +344,13 @@ func main() {
 	http.HandleFunc("/query", query)
 	http.HandleFunc("/annotations", annotations)
 	http.HandleFunc("/", hello)
+
+	go func() {
+		for {
+			searchCache.Update()
+			time.Sleep(time.Duration(config.Server.SearchCache) * time.Second)
+		}
+	}()
 
 	err := http.ListenAndServe(config.Server.IpAddr+":"+strconv.Itoa(config.Server.Port), nil)
 	if err != nil {
