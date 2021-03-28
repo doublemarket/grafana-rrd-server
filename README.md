@@ -76,11 +76,37 @@ This server supports all endpoints (urls) defined in the [Grafana Simple JSON Da
        step = 300
        ```
 
-4. Setup Grafana and Simple JSON Datastore plugin.
+4. Optionally set up systemd unit:
+
+```
+useradd grafanarrd
+cat > /etc/systemd/system/grafana-rrd-server.service <<EOF
+[Unit]
+Description=Grafana RRD Server
+After=network.service
+
+[Service]
+User=grafanarrd
+Group=grafanarrd
+Restart=on-failure
+Environment="LD_LIBRARY_PATH=/opt/rrdtool-1.6/lib"
+ExecStart=/opt/grafana-rrd-server/grafana-rrd-server -p 9000 -r /path/to/rrds -s 300
+RestartSec=10s
+
+[Install]
+WantedBy=default.target
+EOF
+
+systemctl daemon-reload
+systemctl enable grafana-rrd-server
+systemctl start grafana-rrd-server
+```
+
+5. Setup Grafana and Simple JSON Datastore plugin.
 
    See [Grafana documentation](http://docs.grafana.org/)
 
-5. Create datasource.
+6. Create datasource.
 
 # Contributing
 

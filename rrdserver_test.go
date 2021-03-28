@@ -34,6 +34,7 @@ func TestHello(t *testing.T) {
 
 func TestSearch(t *testing.T) {
 	SetArgs()
+	searchCache.Update()
 
 	requestJSON := `{"target":"sample"}`
 	reader := strings.NewReader(requestJSON)
