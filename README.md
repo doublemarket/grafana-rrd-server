@@ -58,7 +58,7 @@ This server supports all endpoints (urls) defined in the [Grafana Simple JSON Da
 3. Run the server.
 
    ```
-   grafana-rrd-server
+   make run
    ```
 
    You can use the following options:
@@ -90,7 +90,7 @@ User=grafanarrd
 Group=grafanarrd
 Restart=on-failure
 Environment="LD_LIBRARY_PATH=/opt/rrdtool-1.6/lib"
-ExecStart=/opt/grafana-rrd-server/grafana-rrd-server -p 9000 -r /path/to/rrds -s 300
+ExecStart=/usr/bin/go /opt/grafana-rrd-server/rrdserver.go -p 9000 -r /path/to/rrds -s 300
 RestartSec=10s
 
 [Install]
