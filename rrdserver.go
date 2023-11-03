@@ -341,6 +341,7 @@ func main() {
 	SetArgs()
 
 	http.HandleFunc("/search", search)
+	http.HandleFunc("/metrics", search)
 	http.HandleFunc("/query", query)
 	http.HandleFunc("/annotations", annotations)
 	http.HandleFunc("/", hello)
